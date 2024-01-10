@@ -13,6 +13,7 @@ def on_closing():
 
 def open_file():
     """Ouvre un fichier pour éditer."""
+    highlight_syntax()
     filepath = askopenfilename(filetypes=[("Text Files", "*.txt"), ("All Files", "*.*")])
     if not filepath:
         return
@@ -42,6 +43,36 @@ def set_theme(theme):
         colors = {"bg": "gray20", "fg": "white"}
 
     text_edit.config(bg=colors["bg"], fg=colors["fg"], insertbackground=colors["fg"])
+
+
+def highlight_syntax(event=None):
+    ''' Fonction pour mettre en évidence la syntaxe du Python dans l'éditeur de texte. '''
+    # Désactivation de la mise en évidence pendant la mise à jour
+    for tag in ["keyword", "string", "comment"]:
+        text_edit.tag_remove(tag, "1.0", tk.END)
+
+    # Expressions régulières pour différents éléments de syntaxe
+    patterns = {
+        "keyword": r"\b(import|as|from|def|return|class|if|elif|else|while|for|break|continue|try)\b",
+        "string": r"\".*?\"|'.*?'",
+        "comment": r"#.*"
+    }
+
+    # Mise en évidence de chaque élément
+    for tag, pattern in patterns.items():
+        start = "1.0"
+        end = "end"
+        while True:
+            start = text_edit.search(pattern, start, stopindex=end, regexp=True)
+            if not start:
+                break
+            stop = text_edit.index(f"{start}+{len(text_edit.get(start, f'{start} lineend'))}c")
+            text_edit.tag_add(tag, start, stop)
+            start = stop
+
+    text_edit.tag_config("keyword", foreground="blue")
+    text_edit.tag_config("string", foreground="green")
+    text_edit.tag_config("comment", foreground="gray")
 
 
 # Création de la fenêtre principale
