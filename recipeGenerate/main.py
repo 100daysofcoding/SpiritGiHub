@@ -1,43 +1,35 @@
 import requests
 
+def rechercher_recettes_par_ingredients(ingredients):
+    url = 'https://www.themealdb.com/api/json/v1/1/filter.php'
+    params = {'i': ingredients}
+    response = requests.get(url, params=params)
 
-def trouver_recettes(ingredients, cle_api):
-    url_api = "https://api.spoonacular.com/recipes/findByIngredients"
-    params = {
-        'apiKey': cle_api,
-        'ingredients': ingredients,
-        'number': 1,
-    }
-    try:
-        reponse = requests.get(url_api, params=params)
-        reponse.raise_for_status()
-        return reponse.json()
-    except requests.RequestException as e:
-        print(f"Erreur lors de la requête à l'API Spoonacular: {e}")
-        return None
+    if response.status_code == 200:
+        meals = response.json().get('meals')
+        if meals:
+            for meal in meals:
+                meal_id = meal['idMeal']
+                obtenir_details_du_plat(meal_id)
+        else:
+            print("Aucun plat trouvé pour les ingrédients donnés.")
+    else:
+        print("Erreur lors de la recherche des plats.")
 
+def obtenir_details_du_plat(meal_id):
+    detail_url = f'https://www.themealdb.com/api/json/v1/1/lookup.php?i={meal_id}'
+    response = requests.get(detail_url)
 
-def details_recette(id_recette, cle_api):
-    url_details = f"https://api.spoonacular.com/recipes/{id_recette}/information"
-    params = {'apiKey': cle_api}
-    try:
-        reponse = requests.get(url_details, params=params)
-        reponse.raise_for_status()
-        return reponse.json()
-    except requests.RequestException as e:
-        print(f"Erreur lors de la requête des détails de la recette: {e}")
-        return None
+    if response.status_code == 200:
+        meal_details = response.json().get('meals', [])[0]  # Prend le premier élément de la liste
+        print(f"Nom du Plat: {meal_details['strMeal']}")
+        print(f"Catégorie: {meal_details['strCategory']}")
+        print(f"Zone: {meal_details['strArea']}")
+        print(f"Instructions: {meal_details['strInstructions']}")
+        print(f"Image: {meal_details['strMealThumb']}\n")
+    else:
+        print("Erreur lors de l'obtention des détails du plat.")
 
-
-cle_api = "ddb9de47d1494720b9b991bda9dc98fa"
-
-ingredients_utilisateur = input("Entrez les ingrédients séparés par des virgules (ex. tomates, mozzarella, basilic): ")
-recettes = trouver_recettes(ingredients_utilisateur, cle_api)
-
-if recettes:
-    for recette in recettes:
-        details = details_recette(recette['id'], cle_api)
-        if details:
-            print(f"Recette: {details['title']}\nInstructions: {details.get('instructions', 'Pas d\'instructions disponibles.')}\n")
-else:
-    print("Aucune recette trouvée.")
+if __name__ == "__main__":
+    ingredients = input("Entrez les ingrédients (par exemple, chicken, tomato): ")
+    rechercher_recettes_par_ingredients(ingredients)
